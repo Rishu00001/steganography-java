@@ -1,3 +1,4 @@
+```mermaid
 classDiagram
     %% INTERFACES & ABSTRACT CLASSES
     class SteganoAlgorithm {
@@ -34,7 +35,7 @@ classDiagram
     }
 
     class ProcessTask {
-        <<Class implements Runnable>>
+        <<Class Runnable implements>>
         -encoder : LSBEncoder
         -history : SessionHistory
         -isEncoding : boolean
@@ -56,3 +57,4 @@ classDiagram
     ProcessTask --> SessionHistory : Updates Logs
     Main --> ProcessTask : Creates & Starts Thread
     Main --> SessionHistory : Initializes
+```
