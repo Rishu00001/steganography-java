@@ -1,22 +1,58 @@
-graph TD
-    %% Styling
-    classDef interface fill:#f9f,stroke:#333,stroke-width:2px;
-    classDef abstract fill:#bbf,stroke:#333,stroke-width:2px;
-    classDef logic fill:#d4edda,stroke:#28a745,stroke-width:2px;
-    classDef io fill:#f8d7da,stroke:#dc3545,stroke-width:2px;
+classDiagram
+    %% INTERFACES & ABSTRACT CLASSES
+    class SteganoAlgorithm {
+        <<Interface>>
+        +encode(coverImage: File, secretMessage: String, outputImage: File) void
+        +decode(stegoImage: File) String
+    }
 
-    %% Components
-    Main[Main.java<br>Entry Point & UI] -->|Creates Thread| Thread(ProcessTask.java<br>Runnable Thread)
+    class BaseImageProcessor {
+        <<Abstract>>
+        #loadImage(file: File) BufferedImage
+        #saveImage(image: BufferedImage, file: File) void
+    }
+
+    %% CORE ENGINE CLASSES
+    class LSBEncoder {
+        <<Class>>
+        -DELIMITER : String = "###"
+        +encode(coverImage: File, secretMessage: String, outputImage: File) void
+        +decode(stegoImage: File) String
+    }
+
+    class ImageTooSmallException {
+        <<Exception>>
+        +ImageTooSmallException(message: String)
+    }
+
+    %% MODELS & THREADS
+    class SessionHistory {
+        <<Class>>
+        -operationLogs : List~String~
+        +addLog(operation: String, fileName: String, status: String) void
+        +displayHistory() void
+    }
+
+    class ProcessTask {
+        <<Class implements Runnable>>
+        -encoder : LSBEncoder
+        -history : SessionHistory
+        -isEncoding : boolean
+        +run() void
+    }
+
+    class Main {
+        <<Class>>
+        +main(args: String[]) void
+        -waitForThread(thread: Thread) void
+    }
+
+    %% RELATIONSHIPS (Arrows and Connections)
+    SteganoAlgorithm <|.. LSBEncoder : Implements
+    BaseImageProcessor <|-- LSBEncoder : Extends
+    LSBEncoder ..> ImageTooSmallException : Throws
     
-    Thread -->|Saves Logs| History[(SessionHistory.java<br>Collections)]
-    Thread -->|Calls| Interface{SteganoAlgorithm.java<br>Interface}:::interface
-    
-    Logic[LSBEncoder.java<br>Core Bitwise Engine]:::logic -.->|Implements| Interface
-    Logic -.->|Extends| Base[BaseImageProcessor.java<br>Abstract File I/O]:::abstract
-    
-    Logic -->|Throws on Error| Exception[ImageTooSmallException.java]
-    
-    %% Inputs and Outputs
-    Cover[Cover Image .png]:::io --> Logic
-    Msg[Secret Message Text]:::io --> Logic
-    Logic --> Output[Stego-Image Output .png]:::io
+    ProcessTask --> LSBEncoder : Uses (Creates Object)
+    ProcessTask --> SessionHistory : Updates Logs
+    Main --> ProcessTask : Creates & Starts Thread
+    Main --> SessionHistory : Initializes
